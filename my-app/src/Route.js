@@ -7,6 +7,7 @@ import ProductDetailPage from './pages/ProductDetailPage';
 import ProductPage from './pages/ProductPage';
 import CheckOutPage from './pages/CheckOutPage';
 import PrivateRoute from './components/PrivateRoute'; // Route bảo vệ
+import ProfileCustomerPage from './pages/ProfileCustomerPage';
 
 export const router = createBrowserRouter([
   {
@@ -54,7 +55,17 @@ export const router = createBrowserRouter([
             <CheckOutPage />
           </PrivateRoute>
         ),
+      },
+
+      {
+        path: "/profile_customer",
+        element: (
+          <PrivateRoute>
+            <ProfileCustomerPage />
+          </PrivateRoute>
+        ),
       }
+
     ]
   },
   {

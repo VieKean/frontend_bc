@@ -1,105 +1,306 @@
-import React from 'react';
-import { Form, Input, Button, message } from 'antd';
+
+import React, { useState } from "react";
 import api from '../services/api';
-import { Link } from 'react-router-dom';
+import { message } from "antd";
 
-const RegisterPage = () => {
-  const onFinish = async (values) => {
-    try {
-      // Add the role to the values since it's in the received data
-      const dataToSend = {
-        username: values.username,
-        password: values.password,
-        fullname: values.fullname,
-        address: values.address,
-        phonenumber: values.phonenumber,
-        email: values.email,
-        role: 'user', // Static value for role, as per the received data
-      };
+const Register1 = () => {
+    const [formData, setFormData] = useState({
+        fullname: "",
+        phonenumber: "",
+        username: "",
+        email: "",
+        password: "",
+        confirmPassword: "",
+    });
 
-      // Gọi API đăng ký với data mới
-      await api.post('/register', dataToSend);
-      message.success('Registration successful! You can now log in.');
 
-      // Điều hướng về trang đăng nhập
-      window.location.href = '/login';
-    } catch (error) {
-      message.error('Registration failed! Please try again.');
+    // gia trị ban đầu trước khi check
+    const defaulValidateInput = {
+
+        isValidFullname: true,
+        isValidPhone: true,
+        isValidUsername: true,
+        isValidEmail: true,
+        isValidPassword: true,
+        isValidCfPass: true
     }
-  };
 
-  return (
-    <div style={{ maxWidth: 400, margin: '100px auto', padding: 20, border: '1px solid #ddd', borderRadius: 8 }}>
-      <h2 style={{ textAlign: 'center' }}>Register</h2>
-      <Form name="register" onFinish={onFinish}>
-        <Form.Item
-          name="username"
-          rules={[{ required: true, message: 'Please input your username!' }]}
-        >
-          <Input placeholder="Username" />
-        </Form.Item>
-        <Form.Item
-          name="fullname"
-          rules={[{ required: true, message: 'Please input your full name!' }]}
-        >
-          <Input placeholder="Full Name" />
-        </Form.Item>
-        <Form.Item
-          name="email"
-          rules={[
-            { required: true, message: 'Please input your email!' },
-            { type: 'email', message: 'Please enter a valid email!' },
-          ]}
-        >
-          <Input placeholder="Email" />
-        </Form.Item>
-        <Form.Item
-          name="address"
-          rules={[{ required: true, message: 'Please input your address!' }]}
-        >
-          <Input placeholder="Address" />
-        </Form.Item>
-        <Form.Item
-          name="phonenumber"
-          rules={[
-            { required: true, message: 'Please input your phone number!' },
-            { pattern: /^[0-9]{10}$/, message: 'Please enter a valid phone number!' },
-          ]}
-        >
-          <Input placeholder="Phone Number" />
-        </Form.Item>
-        <Form.Item
-          name="password"
-          rules={[{ required: true, message: 'Please input your password!' }]}
-        >
-          <Input.Password placeholder="Password" />
-        </Form.Item>
-        <Form.Item
-          name="confirmPassword"
-          dependencies={['password']}
-          rules={[
-            { required: true, message: 'Please confirm your password!' },
-            ({ getFieldValue }) => ({
-              validator(_, value) {
-                if (!value || getFieldValue('password') === value) {
-                  return Promise.resolve();
+    // chỉnh sửa giá trị khi check không hợp lệ
+    const [checkInput, setCheckInput] = useState(defaulValidateInput)
+
+
+    //tự động thay đổi giá trị khi nhập vào input và cập nhật state
+    const handleChange = (event) => {
+        const { id, value } = event.target;
+        setFormData({ ...formData, [id]: value });
+    };
+
+
+    // xử lí thông tin đăng ký
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+
+        setCheckInput(defaulValidateInput)
+
+        // check
+        const validateInput = (formData) => {
+            if (!formData.fullname) {
+                message.error("Chưa nhập họ tên!");
+                setCheckInput({ ...defaulValidateInput, isValidFullname: false })
+                return false;
+            }
+
+
+            if (!formData.phonenumber) {
+                message.error("Chưa nhập số điện thoại!");
+                setCheckInput({ ...defaulValidateInput, isValidPhone: false })
+                return false;
+            }
+
+
+            if (!formData.email) {
+                message.error("Chưa nhập email!");
+                setCheckInput({ ...defaulValidateInput, isValidEmail: false })
+                return false;
+            }
+
+
+            var re = /\S+@\S+\.\S+/; //check email
+            if (!re.test(formData.email)) {
+                message.error("Email không hợp lệ!");
+                setCheckInput({ ...defaulValidateInput, isValidEmail: false })
+                return false;
+            }
+
+
+            if (!formData.username) {
+                message.error("Chưa nhập tài khoản!");
+                setCheckInput({ ...defaulValidateInput, isValidUsername: false })
+                return false;
+            }
+
+
+            if (!formData.password) {
+                message.error("Chưa nhập mật khẩu!");
+                setCheckInput({ ...defaulValidateInput, isValidPassword: false })
+                return false;
+            }
+
+
+            if (!formData.confirmPassword) {
+                message.error("Chưa xác nhận mật khẩu!");
+                setCheckInput({ ...defaulValidateInput, isValidCfPass: false })
+                return false;
+            }
+
+
+            if (formData.password !== formData.confirmPassword) {
+                message.error("Xác nhận mật khẩu thất bại!");
+                setCheckInput({ ...defaulValidateInput, isValidCfPass: false })
+                return false;
+            }
+
+            if (formData.password && formData.password.length < 11) {
+                message.error("Mật khẩu phải dài hơn 10 ký tự!");
+                return false;
+            }
+
+            if (formData.phonenumber && formData.phonenumber.length < 9) {
+                message.error("Số điện thoại không hợp lên!");
+                return false;
+            }
+
+            if (formData.phonenumber && formData.phonenumber.length > 11) {
+                message.error("Số điện thoại không hợp lên!");
+                return false;
+            }
+
+            return true
+
+        }
+
+        let check = validateInput(formData)
+
+        console.log("Check:", check)
+
+        if (check == true) {
+            try {
+                // Gọi API đăng ký
+                let getJSON = await api.post("/register", formData);
+                let getDataJSON = getJSON.data;
+                console.log(formData)
+                if (+getDataJSON.err == 1) {
+                    let messageJSON = getDataJSON.message
+                    message.error(messageJSON);
                 }
-                return Promise.reject(new Error('Passwords do not match!'));
-              },
-            }),
-          ]}
-        >
-          <Input.Password placeholder="Confirm Password" />
-        </Form.Item>
-        <Form.Item>
-          <Button type="primary" htmlType="submit" style={{ width: '100%' }}>
-            Register
-          </Button>
-        </Form.Item>
-        <p style={{ textAlign: 'center' }}><Link to="/login">Login</Link></p>
-      </Form>
-    </div>
-  );
+                else {
+                    message.success("Đăng ký thành công! Bạn có thể đăng nhập.");
+                }
+
+
+
+            } catch (error) {
+                console.error("Đăng ký thất bại:", error);
+                message.error("Đăng ký thất bại. Vui lòng thử lại.");
+            }
+        }
+    };
+
+    return (
+
+
+
+
+        <section className="vh-100 gradient-custom">
+            <div className="container py-5 h-100">
+                <div className="row justify-content-center align-items-center h-100">
+                    <div className="col-12 col-lg-9 col-xl-7">
+                        <div className="card shadow-2-strong card-registration">
+                            <div className="card-body p-4 p-md-5">
+                                <h3 className="mb-4 pb-2 pb-md-0 mb-md-5">Đăng ký</h3>
+                                <form onSubmit={handleSubmit}>
+                                    <div className="row">
+                                        <div className="col-md-6 mb-4 pb-2">
+                                            <div className="form-outline">
+                                                <input
+                                                    type="text"
+                                                    id="fullname"
+                                                    className={checkInput.isValidFullname ? "form-control form-control-lg" : "form-control form-control-lg is-invalid"}
+                                                    value={formData.fullname}
+                                                    onChange={handleChange}
+                                                    placeholder="Nhập họ tên"
+
+                                                />
+                                                <label
+                                                    className={`form-label ${formData.fullname ? "" : "hidden-label"
+                                                        }`}
+                                                    htmlFor="fullname"
+                                                >
+                                                    Họ tên
+                                                </label>
+                                            </div>
+                                        </div>
+                                        <div className="col-md-6 mb-4 pb-2">
+                                            <div className="form-outline">
+                                                <input
+                                                    type="tel"
+                                                    id="phonenumber"
+                                                    className={checkInput.isValidPhone ? "form-control form-control-lg" : "form-control form-control-lg is-invalid"}
+                                                    value={formData.phonenumber}
+                                                    onChange={handleChange}
+                                                    placeholder="Nhập số điện thoại"
+
+                                                />
+                                                <label
+                                                    className={`form-label ${formData.phonenumber ? "" : "hidden-label"
+                                                        }`}
+                                                    htmlFor="phonenumber"
+                                                >
+                                                    Số điện thoại
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="row">
+                                        <div className="col-md-6 mb-4">
+                                            <div className="form-outline">
+                                                <input
+                                                    type="text"
+                                                    id="username"
+                                                    className={checkInput.isValidUsername ? "form-control form-control-lg" : "form-control form-control-lg is-invalid"}
+                                                    value={formData.username}
+                                                    onChange={handleChange}
+                                                    placeholder="Nhập tài khoản"
+
+                                                />
+                                                <label
+                                                    className={`form-label ${formData.username ? "" : "hidden-label"
+                                                        }`}
+                                                    htmlFor="username"
+                                                >
+                                                    Tài khoản
+                                                </label>
+                                            </div>
+                                        </div>
+                                        <div className="col-md-6 mb-4">
+                                            <div className="form-outline">
+                                                <input
+                                                    type="text"
+                                                    id="email"
+                                                    className={checkInput.isValidEmail ? "form-control form-control-lg" : "form-control form-control-lg is-invalid"}
+                                                    value={formData.email}
+                                                    onChange={handleChange}
+                                                    placeholder="Nhập email"
+
+                                                />
+                                                <label
+                                                    className={`form-label ${formData.email ? "" : "hidden-label"
+                                                        }`}
+                                                    htmlFor="email"
+                                                >
+                                                    Email
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="row">
+                                        <div className="col-md-6 mb-4 pb-2">
+                                            <div className="form-outline">
+                                                <input
+                                                    type="password"
+                                                    id="password"
+                                                    className={checkInput.isValidPassword ? "form-control form-control-lg" : "form-control form-control-lg is-invalid"}
+                                                    value={formData.password}
+                                                    onChange={handleChange}
+                                                    placeholder="Nhập mật khẩu"
+
+                                                />
+                                                <label
+                                                    className={`form-label ${formData.password ? "" : "hidden-label"
+                                                        }`}
+                                                    htmlFor="password"
+                                                >
+                                                    Mật khẩu
+                                                </label>
+                                            </div>
+                                        </div>
+                                        <div className="col-md-6 mb-4 pb-2">
+                                            <div className="form-outline">
+                                                <input
+                                                    type="password"
+                                                    id="confirmPassword"
+                                                    className={checkInput.isValidCfPass ? "form-control form-control-lg" : "form-control form-control-lg is-invalid"}
+                                                    value={formData.confirmPassword}
+                                                    onChange={handleChange}
+                                                    placeholder="Nhập lại mật khẩu"
+
+                                                />
+                                                <label
+                                                    className={`form-label ${formData.confirmPassword ? "" : "hidden-label"
+                                                        }`}
+                                                    htmlFor="confirmPassword"
+                                                >
+                                                    Xác nhận mật khẩu
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="mt-4 pt-2">
+                                        <button type="submit" className="btn btn-primary btn-lg">
+                                            Đăng ký
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    );
 };
 
-export default RegisterPage;
+export default Register1;
